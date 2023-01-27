@@ -42,7 +42,7 @@ android {
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.5")
 
-    implementation("com.segment.analytics.kotlin:android:1.5.0")
+    implementation("com.segment.analytics.kotlin:android:1.6.2")
     implementation("androidx.multidex:multidex:2.0.1")
     implementation("androidx.core:core-ktx:1.7.0")
 
@@ -52,7 +52,7 @@ dependencies {
 
 // Partner Dependencies
 dependencies {
-    // TODO add your partner deps here
+    implementation("com.nielsenappsdk:globalx:9.0.0.0")
 }
 
 // Test Dependencies
