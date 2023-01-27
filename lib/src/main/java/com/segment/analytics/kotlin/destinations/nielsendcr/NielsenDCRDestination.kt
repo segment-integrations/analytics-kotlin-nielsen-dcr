@@ -28,7 +28,7 @@ class NielsenDCRDestination : DestinationPlugin() {
         private const val NIELSEN_DCR_FULL_KEY = "Nielsen DCR"
         private const val SF_CODE = "dcr"
 
-        //        Formatter to format properties
+//        Formatter to format properties
         private val CONTENT_FORMATTER = Collections.unmodifiableMap(mapOf(
             "session_id" to "sessionId",
             "asset_id" to "assetId",
@@ -344,12 +344,8 @@ class NielsenDCRDestination : DestinationPlugin() {
     ): JSONObject {
         val contentMetadata: JSONObject = mapSpecialKeys(contentProperties, CONTENT_MAP)
         // map payload options to Nielsen content metadata fields
-        if (options.containsKey("pipmode")) {
-            val pipmode = options["pipmode"].toString()
-            contentMetadata.put("pipmode", pipmode)
-        } else {
-            contentMetadata.put("pipmode", "false")
-        }
+        contentMetadata.put(
+            "pipmode", options["pipmode"] ?: "false")
         if (options.containsKey("crossId1")) {
             val crossId1 = options["crossId1"].toString()
             contentMetadata.put("crossId1", crossId1)
@@ -366,13 +362,8 @@ class NielsenDCRDestination : DestinationPlugin() {
             val segC = options["segC"].toString()
             contentMetadata.put("segC", segC)
         }
-        if (options.containsKey("hasAds")
-            && options["hasAds"] != null && "true" == options["hasAds"].toString()
-        ) {
-            contentMetadata.put("hasAds", "1")
-        } else {
-            contentMetadata.put("hasAds", "0")
-        }
+        contentMetadata.put(
+            "hasAds", if ((options["hasAds"] ?: "false") == "true") "1" else "0")
 
         // map settings to Nielsen content metadata fields
         val contentAssetId = fetchContentAssetId(contentProperties)
@@ -399,7 +390,7 @@ class NielsenDCRDestination : DestinationPlugin() {
         // map properties with non-String values to Nielsen content metadata fields
         if (contentProperties.containsKey("airdate")) {
             var airdate: String? = contentProperties["airdate"]!!
-            if (airdate != null && !airdate.isEmpty()) {
+            if (airdate != null && airdate.isNotEmpty()) {
                 airdate = formatAirDate(contentProperties["airdate"]!!)
             }
             contentMetadata.put("airdate", airdate)
@@ -413,11 +404,7 @@ class NielsenDCRDestination : DestinationPlugin() {
                 adLoadType = contentProperties["loadType"]!!
             }
         }
-        if (adLoadType == "dynamic") {
-            contentMetadata.put("adloadtype", "2")
-        } else {
-            contentMetadata.put("adloadtype", "1")
-        }
+        contentMetadata.put("adloadtype", if (adLoadType == "dynamic") "2" else "1")
         val fullEpisodeStatus: Boolean = contentProperties["fullEpisode"]?.toBoolean() ?: false
         contentMetadata.put("isfullepisode", if (fullEpisodeStatus) "y" else "n")
         contentMetadata.put("type", "content")
