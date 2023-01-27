@@ -33,6 +33,9 @@ allprojects {
         mavenCentral()
         google()
         gradlePluginPortal()
+        maven {
+            url = uri("https://raw.githubusercontent.com/NielsenDigitalSDK/nielsenappsdk-android/master/")
+        }
     }
 }
 
