@@ -96,7 +96,7 @@ class NielsenDCRDestination : DestinationPlugin() {
     }
 
     override fun screen(payload: ScreenEvent): BaseEvent {
-        val propertiesMap = payload.properties.toContent().toMap() as Map<String, String>
+        val propertiesMap = payload.properties.asStringMap()
         val name: String = fetchSectionProperty(propertiesMap, payload.name)
         val contentAssetId: String = fetchContentAssetId(propertiesMap)
         val metadata = JSONObject()
@@ -135,11 +135,14 @@ class NielsenDCRDestination : DestinationPlugin() {
     }
 
     override fun track(payload: TrackEvent): BaseEvent {
+         if(!EventVideoEnum.isVideoEvent(payload.event)) {
+             analytics.log("Event is not Video")
+             return payload
+        }
         val eventEnum = EventVideoEnum[payload.event]
-        val nielsenProperties: Map<String, String> = payload.properties.toContent() as Map<String, String>
-        val nielsenOptions: Map<String, Any> =
-            ((payload.integrations.toContent()["nielsen-dcr"])
-                ?: emptyMap<String, String>()) as Map<String, String>
+        val nielsenProperties: Map<String, String> = payload.properties.asStringMap()
+        val nielsenOptions: Map<String, String> = ((payload.integrations["nielsen-dcr"]
+            ?: JsonObject(emptyMap())) as JsonObject).asStringMap()
         when (eventEnum) {
             EventVideoEnum.PlaybackStarted,
             EventVideoEnum.PlaybackPaused,
@@ -227,10 +230,10 @@ class NielsenDCRDestination : DestinationPlugin() {
     private fun fetchContentAssetId(properties: Map<String, String>): String {
         return if (nielsenDCRSettings!!.contentAssetIdPropertyName.isNotEmpty()) {
             properties[nielsenDCRSettings!!.contentAssetIdPropertyName]!!
-        } else if (!properties["assetId"].isNullOrEmpty()) {
+        } else if ((properties["assetId"]?.toString() ?: "").isNotEmpty()) {
             properties["assetId"]!!
         } else {
-            properties["contentAssetId"]!!
+            (properties["contentAssetId"]?: "").toString()
         }
     }
 
@@ -576,7 +579,8 @@ class NielsenDCRDestination : DestinationPlugin() {
                 // In case of ad `type` preroll, call `loadMetadata` with metadata values for content,
                 // followed by `loadMetadata` with ad (preroll) metadata
                 if (properties["type"].equals("pre-roll")) {
-                    val contentMap = (properties["content"]?: mapOf<String, String>()) as Map<String, String>
+                    val contentMap = ((payload.properties["content"]
+                        ?: JsonObject(emptyMap())) as JsonObject).asStringMap()
                     if (contentMap.isNotEmpty()) {
                         val contentProperties = toCamelCase(contentMap, CONTENT_FORMATTER)
                         val adContentAsset = buildContentMetadata(contentProperties, nielsenOptions)
@@ -641,6 +645,15 @@ internal enum class EventVideoEnum(
                 return names!![name]
             }
             throw IllegalArgumentException("$name is not a valid video event")
+        }
+        /**
+         * Identifies if the event is a video event.
+         *
+         * @param eventName Event name
+         * @return `true` if it's a video event, `false` otherwise.
+         */
+        fun isVideoEvent(eventName: String): Boolean {
+            return names!!.containsKey(eventName)
         }
     }
 }
