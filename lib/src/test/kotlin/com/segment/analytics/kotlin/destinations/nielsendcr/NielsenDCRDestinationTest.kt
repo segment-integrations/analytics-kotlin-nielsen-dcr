@@ -14,7 +14,6 @@ import io.mockk.impl.annotations.MockK
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import org.json.JSONException
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -64,9 +63,11 @@ class NielsenDCRDestinationTest {
             }
         """.trimIndent()
     )
+
     init {
         MockKAnnotations.init(this)
     }
+
     @Before
     fun setUp() {
         mockedNielsenDcrDestination = NielsenDCRDestination()
@@ -86,6 +87,64 @@ class NielsenDCRDestinationTest {
 
         mockedNielsenDcrDestination.update(nielsenNCRSettings, Plugin.UpdateType.Initial)
         mockedNielsenDcrDestination.appSdk = mockedAppSdk
+    }
+
+    @Test
+    fun `screen handled correctly`() {
+        val sampleEvent = ScreenEvent(
+            name = "Screen 1",
+            category = "Category 1",
+            properties = buildJsonObject {
+                put("variation", "New Screen")
+                put("assetId", 123456)
+            }
+        ).apply {
+            anonymousId = "anonymous_UserID-123"
+            context = emptyJsonObject
+            integrations = emptyJsonObject
+        }
+        mockedNielsenDcrDestination.screen(sampleEvent)
+        val screenExpectedMetadata = JSONObject()
+        screenExpectedMetadata.put("assetid", "123456")
+        screenExpectedMetadata.put("section", "Screen 1")
+        screenExpectedMetadata.put("type", "static")
+        screenExpectedMetadata.put("segB", "")
+        screenExpectedMetadata.put("segC", "")
+        verify { mockedAppSdk.loadMetadata(matchJSONObject(screenExpectedMetadata)) }
+    }
+
+    @Test
+    fun `screen handled with custom settings correctly`() {
+        mockedNielsenDcrDestination.nielsenDCRSettings?.customSectionProperty = "customSection"
+        mockedNielsenDcrDestination.nielsenDCRSettings?.contentAssetIdPropertyName = "customContentAssetId"
+        val sampleEvent = ScreenEvent(
+            name = "Screen 1",
+            category = "Category 1",
+            properties = buildJsonObject {
+                put("variation", "New Screen")
+                put("customSection", "customSection")
+                put("customContentAssetId", 123456)
+            }
+        ).apply {
+            anonymousId = "anonymous_UserID-123"
+            context = emptyJsonObject
+            integrations = buildJsonObject {
+                put("nielsen-dcr",  buildJsonObject {
+                    put("segB", "segmentB")
+                    put("segC", "segmentC")
+                    put("crossId1", "Cross Id 1 value")
+                })
+            }
+        }
+        mockedNielsenDcrDestination.screen(sampleEvent)
+        val screenExpectedMetadata = JSONObject()
+        screenExpectedMetadata.put("assetid", "123456")
+        screenExpectedMetadata.put("section", "customSection")
+        screenExpectedMetadata.put("type", "static")
+        screenExpectedMetadata.put("segB", "segmentB")
+        screenExpectedMetadata.put("segC", "segmentC")
+        screenExpectedMetadata.put("crossId1", "Cross Id 1 value")
+        verify { mockedAppSdk.loadMetadata(matchJSONObject(screenExpectedMetadata)) }
     }
 
     @Test
@@ -138,7 +197,6 @@ class NielsenDCRDestinationTest {
     }
 
     @Test
-    @Throws(JSONException::class)
     fun `track for Video Playback Started with live stream handled correctly`() {
         val sampleEvent = TrackEvent(
             event = "Video Playback Started",
@@ -698,7 +756,6 @@ class NielsenDCRDestinationTest {
         verify { mockedAppSdk.loadMetadata(matchJSONObject(expectedMetaData)) }
     }
 
-
     @Test
     fun `track for Video Ad Started with type pre-roll handled correctly`() {
         val sampleEvent = TrackEvent(
@@ -827,7 +884,6 @@ class NielsenDCRDestinationTest {
         JSONAssert.assertEquals(adExpectedMetadata, adCaptureSlot.captured, JSONCompareMode.LENIENT)
     }
 
-
     @Test
     fun `track for Video Ad Completed handled correctly`() {
         val sampleEvent = TrackEvent(
@@ -847,64 +903,5 @@ class NielsenDCRDestinationTest {
         }
         mockedNielsenDcrDestination.track(sampleEvent)
         verify{mockedAppSdk.stop()}
-    }
-
-
-    @Test
-    fun `screen handled correctly`() {
-        val sampleEvent = ScreenEvent(
-            name = "Screen 1",
-            category = "Category 1",
-            properties = buildJsonObject {
-                put("variation", "New Screen")
-                put("assetId", 123456)
-            }
-        ).apply {
-            anonymousId = "anonymous_UserID-123"
-            context = emptyJsonObject
-            integrations = emptyJsonObject
-        }
-        mockedNielsenDcrDestination.screen(sampleEvent)
-        val screenExpectedMetadata = JSONObject()
-        screenExpectedMetadata.put("assetid", "123456")
-        screenExpectedMetadata.put("section", "Screen 1")
-        screenExpectedMetadata.put("type", "static")
-        screenExpectedMetadata.put("segB", "")
-        screenExpectedMetadata.put("segC", "")
-        verify { mockedAppSdk.loadMetadata(matchJSONObject(screenExpectedMetadata)) }
-    }
-
-    @Test
-    fun `screen handled with custom settings correctly`() {
-        mockedNielsenDcrDestination.nielsenDCRSettings?.customSectionProperty = "customSection"
-        mockedNielsenDcrDestination.nielsenDCRSettings?.contentAssetIdPropertyName = "customContentAssetId"
-        val sampleEvent = ScreenEvent(
-            name = "Screen 1",
-            category = "Category 1",
-            properties = buildJsonObject {
-                put("variation", "New Screen")
-                put("customSection", "customSection")
-                put("customContentAssetId", 123456)
-            }
-        ).apply {
-            anonymousId = "anonymous_UserID-123"
-            context = emptyJsonObject
-            integrations = buildJsonObject {
-                put("nielsen-dcr",  buildJsonObject {
-                    put("segB", "segmentB")
-                    put("segC", "segmentC")
-                    put("crossId1", "Cross Id 1 value")
-                })
-            }
-        }
-        mockedNielsenDcrDestination.screen(sampleEvent)
-        val screenExpectedMetadata = JSONObject()
-        screenExpectedMetadata.put("assetid", "123456")
-        screenExpectedMetadata.put("section", "customSection")
-        screenExpectedMetadata.put("type", "static")
-        screenExpectedMetadata.put("segB", "segmentB")
-        screenExpectedMetadata.put("segC", "segmentC")
-        screenExpectedMetadata.put("crossId1", "Cross Id 1 value")
-        verify { mockedAppSdk.loadMetadata(matchJSONObject(screenExpectedMetadata)) }
     }
 }

@@ -96,7 +96,7 @@ class NielsenDCRDestination : DestinationPlugin() {
     }
 
     override fun screen(payload: ScreenEvent): BaseEvent {
-        val propertiesMap = payload.properties.asStringMap() as Map<String, String>
+        val propertiesMap = payload.properties.asStringMap()
         val name: String = fetchSectionProperty(propertiesMap, payload.name)
         val contentAssetId: String = fetchContentAssetId(propertiesMap)
         val metadata = JSONObject()
@@ -140,7 +140,7 @@ class NielsenDCRDestination : DestinationPlugin() {
              return payload
         }
         val eventEnum = EventVideoEnum[payload.event]
-        val nielsenProperties: Map<String, String> = payload.properties.asStringMap() as Map<String, String>
+        val nielsenProperties: Map<String, String> = payload.properties.asStringMap()
         val nielsenOptions: Map<String, String> = ((payload.integrations["nielsen-dcr"]
             ?: JsonObject(emptyMap())) as JsonObject).asStringMap()
         when (eventEnum) {
