@@ -15,6 +15,29 @@ Or the following for Kotlin DSL
 implementation("com.segment.analytics.kotlin.destinations:nielsen-dcr:<latest_version>")
 ```
 
+Also add the Maven Nielsen Digital SDK repo (since Nielsen doesn’t publish it on Maven Central) inside repositories section in project level build.gradle.
+```
+allprojects {
+    repositories {
+        mavenCentral()
+        maven {
+            url 'https://raw.githubusercontent.com/NielsenDigitalSDK/nielsenappsdk-android/master/'
+        }
+    }
+}
+```
+Or the following for Kotlin DSL
+```
+allprojects {
+    repositories {
+        mavenCentral()
+        maven {
+            url = uri("https://raw.githubusercontent.com/NielsenDigitalSDK/nielsenappsdk-android/master/")
+        }
+    }
+}
+
+```
 
 ## Using the Plugin in your App
 
