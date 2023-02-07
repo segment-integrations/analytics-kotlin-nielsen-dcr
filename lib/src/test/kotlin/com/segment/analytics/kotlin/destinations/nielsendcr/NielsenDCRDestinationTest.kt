@@ -150,7 +150,7 @@ class NielsenDCRDestinationTest {
     @Test
     fun `settings are updated correctly`() {
 
-        /* assertions Localytics config */
+        /* assertions Nielsen DCR config */
         Assertions.assertNotNull(mockedNielsenDcrDestination.nielsenDCRSettings)
         with(mockedNielsenDcrDestination.nielsenDCRSettings!!) {
             assertEquals(appId, "APPID1234567890")
